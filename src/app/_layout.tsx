@@ -10,7 +10,7 @@ export default function RootLayout() {
         contentStyle: { backgroundColor: '#000' },
       }}
     >
-      <Stack.Screen name="index" options={{ title: 'Galleria' }} />
+      <Stack.Screen name="index" options={{ title: 'Imagery' }} />
       <Stack.Screen name="gallery/[source]" options={{ title: '' }} />
       <Stack.Screen
         name="viewer/[startIndex]"

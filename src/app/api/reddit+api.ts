@@ -9,7 +9,7 @@ export async function GET(request: Request) {
   const url = `https://www.reddit.com${path}`;
 
   const res = await fetch(url, {
-    headers: { 'User-Agent': 'Galleria/1.0' },
+    headers: { 'User-Agent': 'Imagery/1.0' },
   });
 
   const data = await res.json();

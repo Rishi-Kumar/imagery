@@ -13,7 +13,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Architecture
 
-Galleria is a cross-platform Reddit image gallery built with Expo (React Native), TypeScript, Zustand, and expo-image. Users enter a subreddit or username, browse a thumbnail grid, and tap to swipe through images full-screen.
+Imagery is a cross-platform Reddit image gallery built with Expo (React Native), TypeScript, Zustand, and expo-image. Users enter a subreddit or username, browse a thumbnail grid, and tap to swipe through images full-screen.
 
 ### Routing (expo-router, file-based)
 

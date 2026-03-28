@@ -51,7 +51,7 @@ export default function HomeScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <View style={styles.content}>
-        <Text style={styles.title}>Galleria</Text>
+        <Text style={styles.title}>Imagery</Text>
         <Text style={styles.subtitle}>Browse Reddit images</Text>
 
         <TextInput
