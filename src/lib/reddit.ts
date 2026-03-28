@@ -16,12 +16,15 @@ export async function fetchRedditImages(
   if (after) redditParams.set('after', after);
 
   let res: Response;
-  if (Platform.OS === 'web') {
-    // Proxy through our API route to avoid CORS
+  if (Platform.OS !== 'web') {
+    res = await fetch(`https://www.reddit.com${redditPath}?${redditParams}`);
+  } else if (__DEV__) {
+    // Local dev: use Expo Router API route
     const proxyParams = new URLSearchParams({ path: `${redditPath}?${redditParams}` });
     res = await fetch(`/api/reddit?${proxyParams}`);
   } else {
-    res = await fetch(`https://www.reddit.com${redditPath}?${redditParams}`);
+    // Production: use Vercel rewrite proxy to bypass CORS
+    res = await fetch(`/reddit-proxy${redditPath}?${redditParams}`);
   }
 
   if (!res.ok) {
