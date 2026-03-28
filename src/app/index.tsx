@@ -1,98 +1,132 @@
-import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
+import React, { useState } from 'react';
+import {
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { useGalleryStore } from '@/lib/store';
+import type { RedditSource } from '@/lib/types';
 
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
+function parseInput(input: string): RedditSource {
+  const trimmed = input.trim().replace(/^\//, '');
+  if (trimmed.startsWith('u/')) {
+    return { type: 'user', name: trimmed.slice(2) };
   }
-  if (Device.isDevice) {
-    return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
-    );
+  if (trimmed.startsWith('r/')) {
+    return { type: 'subreddit', name: trimmed.slice(2) };
   }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
-  return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
-  );
+  return { type: 'subreddit', name: trimmed };
+}
+
+function encodeSource(source: RedditSource): string {
+  return `${source.type === 'subreddit' ? 'r' : 'u'}-${source.name}`;
 }
 
 export default function HomeScreen() {
+  const [input, setInput] = useState('');
+  const router = useRouter();
+  const { setSource, fetchInitial } = useGalleryStore();
+
+  const handleSubmit = () => {
+    const trimmed = input.trim();
+    if (!trimmed) return;
+    Keyboard.dismiss();
+
+    const source = parseInput(trimmed);
+    setSource(source);
+    fetchInitial();
+    router.push(`/gallery/${encodeSource(source)}`);
+  };
+
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
-          </ThemedText>
-        </ThemedView>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+      <View style={styles.content}>
+        <Text style={styles.title}>Galleria</Text>
+        <Text style={styles.subtitle}>Browse Reddit images</Text>
 
-        <ThemedText type="code" style={styles.code}>
-          get started
-        </ThemedText>
+        <TextInput
+          style={styles.input}
+          placeholder="r/earthporn or u/username"
+          placeholderTextColor="#666"
+          value={input}
+          onChangeText={setInput}
+          onSubmitEditing={handleSubmit}
+          autoCapitalize="none"
+          autoCorrect={false}
+          returnKeyType="go"
+        />
 
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
-          />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
-          />
-        </ThemedView>
-
-        {Platform.OS === 'web' && <WebBadge />}
-      </SafeAreaView>
-    </ThemedView>
+        <Pressable
+          style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}
+          onPress={handleSubmit}
+        >
+          <Text style={styles.buttonText}>Browse</Text>
+        </Pressable>
+      </View>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    flexDirection: 'row',
+    backgroundColor: '#000',
   },
-  safeArea: {
+  content: {
     flex: 1,
-    paddingHorizontal: Spacing.four,
-    alignItems: 'center',
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
-  },
-  heroSection: {
-    alignItems: 'center',
     justifyContent: 'center',
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
+    alignItems: 'center',
+    paddingHorizontal: 32,
   },
   title: {
-    textAlign: 'center',
+    fontSize: 48,
+    fontWeight: '700',
+    color: '#fff',
+    marginBottom: 8,
   },
-  code: {
-    textTransform: 'uppercase',
+  subtitle: {
+    fontSize: 16,
+    color: '#888',
+    marginBottom: 48,
   },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
+  input: {
+    width: '100%',
+    maxWidth: 400,
+    height: 52,
+    borderRadius: 12,
+    backgroundColor: '#1a1a1a',
+    color: '#fff',
+    fontSize: 18,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: '#333',
+    marginBottom: 16,
+  },
+  button: {
+    width: '100%',
+    maxWidth: 400,
+    height: 52,
+    borderRadius: 12,
+    backgroundColor: '#ff4500',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  buttonPressed: {
+    opacity: 0.8,
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '600',
   },
 });
