@@ -2,7 +2,6 @@
   "buildCommand": "npx expo export --platform web",
   "outputDirectory": "dist",
   "rewrites": [
-    { "source": "/reddit-proxy/:path*", "destination": "https://old.reddit.com/:path*" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

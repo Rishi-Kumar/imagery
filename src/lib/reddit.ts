@@ -40,8 +40,10 @@ export async function fetchRedditImages(
     const proxyParams = new URLSearchParams({ path: `${redditPath}?${redditParams}` });
     res = await fetch(`/api/reddit?${proxyParams}`);
   } else {
-    // Production: use Vercel rewrite proxy to bypass CORS
-    res = await fetch(`/reddit-proxy${redditPath}?${redditParams}`);
+    // Production: Cloudflare Worker proxy (Vercel IPs get blocked by Reddit)
+    res = await fetch(
+      `https://imagery-reddit-proxy.msrishikumar.workers.dev${redditPath}?${redditParams}`,
+    );
   }
 
   if (!res.ok) {
