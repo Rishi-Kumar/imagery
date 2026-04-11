@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import { ActivityIndicator, FlatList, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, FlatList, Platform, StyleSheet, View } from 'react-native';
 
 import { ImageTile } from './ImageTile';
 import { useGalleryStore } from '@/lib/store';
@@ -34,7 +34,11 @@ export function ImageGrid() {
       columnWrapperStyle={styles.row}
       getItemLayout={getItemLayout}
       onEndReached={fetchMore}
-      onEndReachedThreshold={0.5}
+      onEndReachedThreshold={1.2}
+      initialNumToRender={18}
+      maxToRenderPerBatch={12}
+      windowSize={11}
+      removeClippedSubviews={Platform.OS !== 'web'}
       ListFooterComponent={
         isLoading ? (
           <View style={styles.footer}>

@@ -1,6 +1,23 @@
 import { Platform } from 'react-native';
 
+import { PREVIEW_TARGET_PX, THUMBNAIL_TARGET_PX } from './constants';
 import type { GalleryImage, RedditListing, RedditPostData, RedditSource } from './types';
+
+interface Resolution {
+  url: string;
+  width: number;
+  height: number;
+}
+
+export function pickBestResolution(
+  resolutions: Resolution[] | undefined,
+  targetPx: number,
+): string | undefined {
+  if (!resolutions || resolutions.length === 0) return undefined;
+  const sorted = [...resolutions].sort((a, b) => a.width - b.width);
+  const fit = sorted.find((r) => r.width >= targetPx);
+  return (fit ?? sorted[sorted.length - 1]).url;
+}
 
 export async function fetchRedditImages(
   source: RedditSource,
@@ -46,14 +63,22 @@ function extractImages(post: RedditPostData): GalleryImage[] {
       .map((item) => {
         const meta = post.media_metadata![item.media_id];
         if (!meta || meta.status !== 'valid' || meta.e !== 'Image') return null;
-        const thumb =
-          meta.p?.length > 0 ? meta.p[Math.min(2, meta.p.length - 1)].u : meta.s.u;
+        const resolutions: Resolution[] = (meta.p ?? []).map((p) => ({
+          url: p.u,
+          width: p.x,
+          height: p.y,
+        }));
+        const thumbnailUrl =
+          pickBestResolution(resolutions, THUMBNAIL_TARGET_PX) ?? meta.s.u;
+        const previewUrl =
+          pickBestResolution(resolutions, PREVIEW_TARGET_PX) ?? meta.s.u;
         return {
           id: `${post.id}_${item.media_id}`,
           postTitle: post.title,
           author: post.author,
           imageUrl: meta.s.u,
-          thumbnailUrl: thumb,
+          previewUrl,
+          thumbnailUrl,
           width: meta.s.x,
           height: meta.s.y,
           permalink: `https://www.reddit.com${post.permalink}`,
@@ -66,14 +91,18 @@ function extractImages(post: RedditPostData): GalleryImage[] {
   const imageExtensions = /\.(jpg|jpeg|png|gif|webp)(\?.*)?$/i;
   if (post.post_hint === 'image' || imageExtensions.test(post.url)) {
     const preview = post.preview?.images?.[0];
-    const thumb = pickThumbnail(preview?.resolutions) ?? post.url;
+    const thumbnailUrl =
+      pickBestResolution(preview?.resolutions, THUMBNAIL_TARGET_PX) ?? post.url;
+    const previewUrl =
+      pickBestResolution(preview?.resolutions, PREVIEW_TARGET_PX) ?? post.url;
     return [
       {
         id: post.id,
         postTitle: post.title,
         author: post.author,
         imageUrl: post.url,
-        thumbnailUrl: thumb,
+        previewUrl,
+        thumbnailUrl,
         width: preview?.source?.width ?? 0,
         height: preview?.source?.height ?? 0,
         permalink: `https://www.reddit.com${post.permalink}`,
@@ -87,13 +116,18 @@ function extractImages(post: RedditPostData): GalleryImage[] {
     if (match) {
       const directUrl = `https://i.imgur.com/${match[1]}.jpg`;
       const preview = post.preview?.images?.[0];
+      const thumbnailUrl =
+        pickBestResolution(preview?.resolutions, THUMBNAIL_TARGET_PX) ?? directUrl;
+      const previewUrl =
+        pickBestResolution(preview?.resolutions, PREVIEW_TARGET_PX) ?? directUrl;
       return [
         {
           id: post.id,
           postTitle: post.title,
           author: post.author,
           imageUrl: directUrl,
-          thumbnailUrl: pickThumbnail(preview?.resolutions) ?? directUrl,
+          previewUrl,
+          thumbnailUrl,
           width: preview?.source?.width ?? 0,
           height: preview?.source?.height ?? 0,
           permalink: `https://www.reddit.com${post.permalink}`,
@@ -104,13 +138,4 @@ function extractImages(post: RedditPostData): GalleryImage[] {
 
   // 4. Not an image post
   return [];
-}
-
-function pickThumbnail(
-  resolutions?: Array<{ url: string; width: number; height: number }>,
-): string | undefined {
-  if (!resolutions || resolutions.length === 0) return undefined;
-  return resolutions.reduce((best, r) =>
-    Math.abs(r.width - 400) < Math.abs(best.width - 400) ? r : best,
-  ).url;
 }

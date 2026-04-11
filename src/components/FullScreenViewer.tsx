@@ -1,11 +1,18 @@
-import React, { useCallback } from 'react';
-import { Dimensions, FlatList, StyleSheet } from 'react-native';
+import { Image } from 'expo-image';
+import React, { useCallback, useRef } from 'react';
+import {
+  Dimensions,
+  FlatList,
+  Platform,
+  StyleSheet,
+  type ViewToken,
+} from 'react-native';
 
 import { FullScreenImage } from './FullScreenImage';
 import { useGalleryStore } from '@/lib/store';
 import type { GalleryImage } from '@/lib/types';
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 interface Props {
   initialIndex: number;
@@ -28,6 +35,24 @@ export function FullScreenViewer({ initialIndex }: Props) {
     [],
   );
 
+  const viewabilityConfig = useRef({ itemVisiblePercentThreshold: 60 }).current;
+  const imagesRef = useRef(images);
+  imagesRef.current = images;
+
+  const onViewableItemsChanged = useRef(
+    ({ viewableItems }: { viewableItems: ViewToken[] }) => {
+      const current = viewableItems[0]?.index;
+      if (current == null) return;
+      const all = imagesRef.current;
+      const urls = [all[current + 1], all[current + 2], all[current - 1]]
+        .map((img) => img?.previewUrl)
+        .filter((u): u is string => Boolean(u));
+      if (urls.length > 0) {
+        Image.prefetch(urls, 'memory-disk');
+      }
+    },
+  ).current;
+
   return (
     <FlatList
       data={images}
@@ -37,9 +62,14 @@ export function FullScreenViewer({ initialIndex }: Props) {
       getItemLayout={getItemLayout}
       initialScrollIndex={initialIndex}
       onEndReached={fetchMore}
-      onEndReachedThreshold={0.5}
+      onEndReachedThreshold={1.2}
       showsVerticalScrollIndicator={false}
+      initialNumToRender={1}
+      maxToRenderPerBatch={2}
       windowSize={3}
+      removeClippedSubviews={Platform.OS !== 'web'}
+      onViewableItemsChanged={onViewableItemsChanged}
+      viewabilityConfig={viewabilityConfig}
       style={styles.list}
     />
   );

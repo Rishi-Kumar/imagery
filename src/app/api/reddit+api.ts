@@ -13,5 +13,10 @@ export async function GET(request: Request) {
   });
 
   const data = await res.json();
-  return Response.json(data, { status: res.status });
+  return Response.json(data, {
+    status: res.status,
+    headers: {
+      'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
+    },
+  });
 }

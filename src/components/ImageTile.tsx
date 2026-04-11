@@ -25,6 +25,8 @@ export const ImageTile = memo(function ImageTile({ image, index }: Props) {
         contentFit="cover"
         transition={200}
         recyclingKey={image.id}
+        cachePolicy="memory-disk"
+        priority="normal"
       />
     </Pressable>
   );

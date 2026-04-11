@@ -1,7 +1,15 @@
+import { Image } from 'expo-image';
 import { create } from 'zustand';
 
 import { fetchRedditImages } from './reddit';
 import type { GalleryImage, RedditSource } from './types';
+
+function prefetchThumbnails(images: GalleryImage[]) {
+  const urls = images.slice(0, 12).map((i) => i.thumbnailUrl);
+  if (urls.length > 0) {
+    Image.prefetch(urls, 'memory-disk');
+  }
+}
 
 interface GalleryStore {
   source: RedditSource | null;
@@ -33,6 +41,7 @@ export const useGalleryStore = create<GalleryStore>((set, get) => ({
     try {
       const result = await fetchRedditImages(source, null);
       set({ images: result.images, after: result.after, isLoading: false });
+      prefetchThumbnails(result.images);
     } catch (e) {
       set({ error: (e as Error).message, isLoading: false });
     }
@@ -50,6 +59,7 @@ export const useGalleryStore = create<GalleryStore>((set, get) => ({
         after: result.after,
         isLoading: false,
       }));
+      prefetchThumbnails(result.images);
     } catch (e) {
       set({ error: (e as Error).message, isLoading: false });
     }

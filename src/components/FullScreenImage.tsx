@@ -25,10 +25,15 @@ export function FullScreenImage({ image }: Props) {
   return (
     <View style={styles.container}>
       <Image
-        source={{ uri: image.imageUrl }}
+        source={{ uri: image.previewUrl }}
+        placeholder={{ uri: image.thumbnailUrl }}
+        placeholderContentFit="contain"
         style={styles.image}
         contentFit="contain"
-        transition={300}
+        transition={150}
+        cachePolicy="memory-disk"
+        priority="high"
+        recyclingKey={image.id}
       />
       <View style={styles.overlay}>
         <Text style={styles.title} numberOfLines={2}>

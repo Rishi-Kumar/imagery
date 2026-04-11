@@ -3,6 +3,7 @@ export interface GalleryImage {
   postTitle: string;
   author: string;
   imageUrl: string;
+  previewUrl: string;
   thumbnailUrl: string;
   width: number;
   height: number;
